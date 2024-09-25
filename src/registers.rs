@@ -86,10 +86,8 @@ bitfield! {
 bitfield! {
   pub struct AdcRegister(u8);
   impl Debug;
-  pub reg_chps1, set_reg_chps1: 5;
-  pub reg_chps0, set_reg_chps0: 4;
-  pub adc_vcm1, set_adc_vcm1: 3;
-  pub adc_vcm0, set_adc_vcm0: 2;
+  pub reg_chps, set_reg_chps: 5, 4;
+  pub adc_vcm, set_adc_vcm: 3, 2;
   pub reg_chp, set_reg_chp: 1, 0;
 }
 

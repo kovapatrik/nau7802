@@ -3,9 +3,11 @@
 mod constants;
 mod registers;
 
-use constants::{CalibrationMode, Error, Gain, Ldo, SampleRate, NAU7802_ADDRESS};
+use constants::NAU7802_ADDRESS;
 use embedded_hal::i2c::Error as _;
 use registers::Register;
+
+pub use constants::{CalibrationMode, Error, Gain, Ldo, SampleRate};
 
 pub struct Nau7802<I2C, Delay> {
   i2c: I2C,
@@ -46,14 +48,32 @@ where
     device.set_gain(gain).unwrap();
     device.set_sample_rate(sample_rate).unwrap();
 
+    // Disable ADC chopper clock
+    let adc = device.read_register(Register::AdcOtpB2)?;
+    let mut adc = registers::AdcRegister(adc);
+    adc.set_reg_chps(0x3);
+    device.write_register(Register::AdcOtpB2, adc.0)?;
+
+    // Use low ESR capacitor
+    let pga = device.read_register(Register::Pga)?;
+    let mut pga = registers::Pga(pga);
+    pga.set_ldomode(false);
+    device.write_register(Register::Pga, pga.0)?;
+
+    // PGA stabilizer capacitor enable on output
+    let power_ctrl = device.read_register(Register::PowerCtrl)?;
+    let mut power_ctrl = registers::PowerCtrl(power_ctrl);
+    power_ctrl.set_pga_cap_en(true);
+    device.write_register(Register::PowerCtrl, power_ctrl.0)?;
+
     Ok(device)
   }
 
-  pub fn enable(&mut self, is_power_down: bool) -> Result<(), Error> {
+  pub fn enable(&mut self, is_power_up: bool) -> Result<(), Error> {
     let pu_ctrl = self.read_register(Register::PuCtrl)?;
     let mut pu_ctrl = registers::PuCtrl(pu_ctrl);
 
-    if is_power_down {
+    if !is_power_up {
       pu_ctrl.set_pua(false);
       pu_ctrl.set_pud(false);
       self.write_register(Register::PuCtrl, pu_ctrl.0)?;
