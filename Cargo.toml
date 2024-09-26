@@ -2,6 +2,10 @@
 name = "nau7802"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "Driver for the NAU7802 24-bit ADC"
+repository = "https://github.com/kovapatrik/nau7802"
+readme = "README.md"
 
 [dependencies]
 bitfield = "0.17.0"
