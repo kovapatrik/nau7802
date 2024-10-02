@@ -13,8 +13,6 @@ pub struct Nau7802<I2C, Delay> {
   i2c: I2C,
   address: u8,
   delay: Delay,
-  zero_offset: i32,
-  calibration_factor: f32,
 }
 
 impl<I2C, Delay> Nau7802<I2C, Delay>
@@ -37,8 +35,6 @@ where
       i2c,
       address: NAU7802_ADDRESS,
       delay,
-      zero_offset: 0,
-      calibration_factor: 1.0,
     };
 
     device.reset().unwrap();
@@ -140,69 +136,6 @@ where
       value |= 0xFF000000;
     }
     Ok(value as i32)
-  }
-
-  pub fn read_average(&mut self, samples: u8) -> Result<i32, Error> {
-    let mut sum = 0;
-    let mut cnt = 0;
-    let mut timeout = 1000;
-    loop {
-      if timeout == 0 {
-        return Err(Error::Timeout);
-      }
-      if self.available()? {
-        sum += self.read()?;
-        cnt += 1;
-        if cnt >= samples {
-          break;
-        }
-      }
-      self.delay.delay_ms(1);
-      timeout -= 1;
-    }
-    Ok(sum / samples as i32)
-  }
-
-  pub fn read_mass(&mut self, samples: u8) -> Result<f32, Error> {
-    let value = self.read_average(samples)?;
-    let value = if value < 0 {
-      self.zero_offset
-    } else {
-      value - self.zero_offset
-    };
-    Ok(value as f32 / self.calibration_factor)
-  }
-
-  pub fn set_zero_offset(&mut self, offset: i32) {
-    self.zero_offset = offset;
-  }
-
-  pub fn get_zero_offset(&self) -> i32 {
-    self.zero_offset
-  }
-
-  pub fn calculate_zero_offset(&mut self, samples: u8) -> Result<i32, Error> {
-    let offset = self.read_average(samples)?;
-    self.zero_offset = offset;
-    Ok(offset)
-  }
-
-  pub fn set_calibration_factor(&mut self, factor: f32) {
-    self.calibration_factor = factor;
-  }
-
-  pub fn get_calibration_factor(&self) -> f32 {
-    self.calibration_factor
-  }
-
-  pub fn calculate_calibration_factor(
-    &mut self,
-    known_mass: f32,
-    samples: u8,
-  ) -> Result<f32, Error> {
-    let value = self.read_average(samples)? - self.zero_offset;
-    self.calibration_factor = value as f32 / known_mass;
-    Ok(self.calibration_factor)
   }
 
   pub fn set_ldo(&mut self, ldo: Ldo) -> Result<(), Error> {
