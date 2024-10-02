@@ -138,6 +138,14 @@ where
     Ok(value as i32)
   }
 
+  pub fn read_wait(&mut self) -> Result<i32, Error> {
+    loop {
+      if self.available()? {
+        return self.read();
+      }
+    }
+  }
+
   pub fn set_ldo(&mut self, ldo: Ldo) -> Result<(), Error> {
     let pu_ctrl = self.read_register(Register::PuCtrl)?;
     let mut pu_ctrl = registers::PuCtrl(pu_ctrl);
