@@ -216,7 +216,7 @@ where
     }
   }
 
-  pub fn calibrate(&mut self, calibration_mode: CalibrationMode) -> Result<(), Error> {
+  pub fn calibrate_afe(&mut self, calibration_mode: CalibrationMode) -> Result<(), Error> {
     let ctrl2 = self.read_register(Register::Ctrl2)?;
     let mut ctrl2 = registers::Ctrl2(ctrl2);
 
