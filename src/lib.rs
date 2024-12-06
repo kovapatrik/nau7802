@@ -143,6 +143,7 @@ where
       if self.available()? {
         return self.read();
       }
+      self.delay.delay_ms(10);
     }
   }
 
